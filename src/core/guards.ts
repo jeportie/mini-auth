@@ -63,8 +63,3 @@ export function requireAuth(
         return true;
     };
 }
-
-/** Block navigation to /api/ routes */
-export function onBeforeNavigate(to: string): boolean {
-    return !to.startsWith("/api/");
-}
