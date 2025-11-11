@@ -43,7 +43,3 @@ export function requireAuth(auth, { loginPath = "/login", checkSessionFn, logger
         return true;
     };
 }
-/** Block navigation to /api/ routes */
-export function onBeforeNavigate(to) {
-    return !to.startsWith("/api/");
-}

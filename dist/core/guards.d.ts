@@ -8,5 +8,3 @@ export interface RequireAuthOptions {
     logger?: Console;
 }
 export declare function requireAuth(auth: AuthService, { loginPath, checkSessionFn, logger }?: RequireAuthOptions): (ctx: GuardContext) => Promise<true | string>;
-/** Block navigation to /api/ routes */
-export declare function onBeforeNavigate(to: string): boolean;
