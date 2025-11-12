@@ -6,9 +6,12 @@
 //   By: jeportie <jeportie@42.fr>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2025/09/15 12:18:11 by jeportie          #+#    #+#             //
-//   Updated: 2025/10/14 16:31:37 by jeportie         ###   ########.fr       //
+//   Updated: 2025/11/12 17:20:00 by jeportie         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
+function hasWithPrefix(logger) {
+    return typeof logger?.withPrefix === "function";
+}
 /**
  * Generic authentication service.
  * - Stores and retrieves JWT tokens.
@@ -24,42 +27,56 @@ export class AuthService {
     constructor({ storageKey = "session", refreshFn, logger = console } = {}) {
         this.storageKey = storageKey;
         this.refreshFn = refreshFn;
-        this.logger = logger;
+        const baseLogger = logger ?? console;
+        this.logger = hasWithPrefix(baseLogger)
+            ? baseLogger.withPrefix("[Auth]")
+            : baseLogger;
+        this.logger.debug?.("AuthService initialized with storageKey:", this.storageKey);
     }
+    // ------------------------------------------------------------------------
+    // Initialization & Refresh
+    // ------------------------------------------------------------------------
     async initFromStorage() {
-        if (!localStorage.getItem(this.storageKey))
+        if (!localStorage.getItem(this.storageKey)) {
+            this.logger.debug?.("No session flag found in localStorage.");
             return false;
+        }
         try {
+            this.logger.debug?.("Attempting session restoration from refreshFn...");
             const newToken = await this.refreshFn?.();
             if (newToken) {
                 this.setToken(newToken);
-                this.logger.info?.("[Auth] Session restored");
+                this.logger.info?.("Session restored successfully.");
                 return true;
             }
-            this.logger.warn?.("[Auth] RefreshFn returned no token");
+            this.logger.warn?.("refreshFn returned no token.");
         }
         catch (err) {
-            this.logger.error?.("[Auth] Refresh exception:", err);
+            this.logger.error?.("Refresh exception during initFromStorage:", err);
         }
         this.clear();
         return false;
     }
     async refresh() {
         try {
+            this.logger.debug?.("Refreshing token...");
             const newToken = await this.refreshFn?.();
             if (newToken) {
                 this.setToken(newToken);
-                this.logger.info?.("[Auth] Token refreshed");
+                this.logger.info?.("Token refreshed successfully.");
                 return newToken;
             }
-            this.logger.warn?.("[Auth] RefreshFn returned no token");
+            this.logger.warn?.("refreshFn returned no token.");
             return null;
         }
         catch (err) {
-            this.logger.error?.("[Auth] Refresh exception:", err);
+            this.logger.error?.("Refresh exception:", err);
             return null;
         }
     }
+    // ------------------------------------------------------------------------
+    // Token Management
+    // ------------------------------------------------------------------------
     isLoggedIn() {
         return !!this.token;
     }
@@ -68,29 +85,44 @@ export class AuthService {
     }
     setToken(token) {
         this.token = token;
-        if (token)
+        if (token) {
             localStorage.setItem(this.storageKey, "true");
-        else
+            this.logger.debug?.("Stored session flag for key:", this.storageKey);
+        }
+        else {
             localStorage.removeItem(this.storageKey);
+            this.logger.debug?.("Removed session flag for key:", this.storageKey);
+        }
     }
     clear() {
         this.token = null;
         localStorage.removeItem(this.storageKey);
-        this.logger.info?.("[Auth] Session cleared");
+        this.logger.info?.("Session cleared and localStorage flag removed.");
     }
+    // ------------------------------------------------------------------------
+    // Token Expiration
+    // ------------------------------------------------------------------------
     isTokenExpired(skewSec = 10) {
         const t = this.token;
-        if (!t)
+        if (!t) {
+            this.logger.debug?.("Token is null → expired = true");
             return true;
+        }
         const parts = t.split(".");
-        if (parts.length !== 3)
+        if (parts.length !== 3) {
+            this.logger.warn?.("Invalid token format.");
             return true;
+        }
         try {
             const payload = JSON.parse(atob(parts[1]));
             const now = Math.floor(Date.now() / 1000);
-            return (payload.exp ?? 0) <= (now + skewSec);
+            const exp = payload.exp ?? 0;
+            const expired = exp <= (now + skewSec);
+            this.logger.debug?.(`Token exp = ${exp}, now = ${now}, expired = ${expired}`);
+            return expired;
         }
-        catch {
+        catch (err) {
+            this.logger.error?.("Error parsing token payload:", err);
             return true;
         }
     }
