@@ -29,6 +29,8 @@ export class AuthService {
         this.storageKey = storageKey;
         this.refreshFn = refreshFn;
         this.logger = logger;
+        const persisted = localStorage.getItem(this.storageKey);
+        if (persisted && persisted !== "false") this.initFromStorage();
     }
 
     async initFromStorage(): Promise<boolean> {
