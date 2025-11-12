@@ -25,9 +25,6 @@ export class AuthService {
         this.storageKey = storageKey;
         this.refreshFn = refreshFn;
         this.logger = logger;
-        const persisted = localStorage.getItem(this.storageKey);
-        if (persisted && persisted !== "false")
-            this.initFromStorage();
     }
     async initFromStorage() {
         if (!localStorage.getItem(this.storageKey))
@@ -46,6 +43,22 @@ export class AuthService {
         }
         this.clear();
         return false;
+    }
+    async refresh() {
+        try {
+            const newToken = await this.refreshFn?.();
+            if (newToken) {
+                this.setToken(newToken);
+                this.logger.info?.("[Auth] Token refreshed");
+                return newToken;
+            }
+            this.logger.warn?.("[Auth] RefreshFn returned no token");
+            return null;
+        }
+        catch (err) {
+            this.logger.error?.("[Auth] Refresh exception:", err);
+            return null;
+        }
     }
     isLoggedIn() {
         return !!this.token;

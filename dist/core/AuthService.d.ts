@@ -13,6 +13,7 @@ export declare class AuthService {
     private logger;
     constructor({ storageKey, refreshFn, logger }?: AuthOptions);
     initFromStorage(): Promise<boolean>;
+    refresh(): Promise<string | null>;
     isLoggedIn(): boolean;
     getToken(): string | null;
     setToken(token: string | null): void;
