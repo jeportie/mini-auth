@@ -34,8 +34,9 @@ export class AuthService {
         this.logger.debug?.("AuthService initialized with storageKey:", this.storageKey);
     }
     // ------------------------------------------------------------------------
-    // Initialization & Refresh
+    // Initialization & Refresh -> OLD VERSION 
     // ------------------------------------------------------------------------
+    /** @deprecated Use init() instead — refresh-first boot */
     async initFromStorage() {
         if (!localStorage.getItem(this.storageKey)) {
             this.logger.debug?.("No session flag found in localStorage.");
@@ -57,9 +58,31 @@ export class AuthService {
         this.clear();
         return false;
     }
+    // ------------------------------------------------------------------------ //
+    // Initialization (refresh-first boot)
+    // ------------------------------------------------------------------------ //
+    async init() {
+        try {
+            this.logger.debug?.("Boot: trying refreshFn to restore session…");
+            const newToken = await this.refreshFn?.();
+            if (newToken) {
+                this.setToken(newToken);
+                this.logger.info?.("✅ Session restored via refresh cookie");
+                return true;
+            }
+            this.logger.warn?.("⚠️ refreshFn returned no token – clearing session");
+            this.clear();
+            return false;
+        }
+        catch (err) {
+            this.logger.error?.("❌ Refresh exception during init():", err);
+            this.clear();
+            return false;
+        }
+    }
     async refresh() {
         try {
-            this.logger.debug?.("Refreshing token...");
+            this.logger.debug?.("Manual token refresh requested...");
             const newToken = await this.refreshFn?.();
             if (newToken) {
                 this.setToken(newToken);
@@ -97,7 +120,7 @@ export class AuthService {
     clear() {
         this.token = null;
         localStorage.removeItem(this.storageKey);
-        this.logger.info?.("Session cleared and localStorage flag removed.");
+        this.logger.info?.("Session cleared.");
     }
     // ------------------------------------------------------------------------
     // Token Expiration

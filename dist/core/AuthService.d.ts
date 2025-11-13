@@ -12,7 +12,9 @@ export declare class AuthService {
     private refreshFn?;
     private logger;
     constructor({ storageKey, refreshFn, logger }?: AuthOptions);
+    /** @deprecated Use init() instead — refresh-first boot */
     initFromStorage(): Promise<boolean>;
+    init(): Promise<boolean>;
     refresh(): Promise<string | null>;
     isLoggedIn(): boolean;
     getToken(): string | null;
