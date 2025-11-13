@@ -41,37 +41,6 @@ export class AuthService {
         this.logger.debug?.("AuthService initialized with storageKey:", this.storageKey);
     }
 
-    // ------------------------------------------------------------------------
-    // Initialization & Refresh -> OLD VERSION 
-    // ------------------------------------------------------------------------
-
-    /** @deprecated Use init() instead — refresh-first boot */
-    async initFromStorage(): Promise<boolean> {
-        if (!localStorage.getItem(this.storageKey)) {
-            this.logger.debug?.("No session flag found in localStorage.");
-            return false;
-        }
-
-        try {
-            this.logger.debug?.("Attempting session restoration from refreshFn...");
-
-            const newToken = await this.refreshFn?.();
-
-            if (newToken) {
-                this.setToken(newToken);
-                this.logger.info?.("Session restored successfully.");
-                return true;
-            }
-
-            this.logger.warn?.("refreshFn returned no token.");
-        } catch (err) {
-            this.logger.error?.("Refresh exception during initFromStorage:", err);
-        }
-
-        this.clear();
-        return false;
-    }
-
     // ------------------------------------------------------------------------ //
     // Initialization (refresh-first boot)
     // ------------------------------------------------------------------------ //
@@ -131,19 +100,15 @@ export class AuthService {
 
     setToken(token: string | null): void {
         this.token = token;
-
-        if (token) {
-            localStorage.setItem(this.storageKey, "true");
-            this.logger.debug?.("Stored session flag for key:", this.storageKey);
-        } else {
-            localStorage.removeItem(this.storageKey);
-            this.logger.debug?.("Removed session flag for key:", this.storageKey);
-        }
+        this.logger.debug?.(
+            token ? "Token set (no storage flag)"
+                : "Token cleared (no storage flag)"
+        );
     }
+
 
     clear(): void {
         this.token = null;
-        localStorage.removeItem(this.storageKey);
         this.logger.info?.("Session cleared.");
     }
 

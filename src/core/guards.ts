@@ -53,7 +53,6 @@ export function requireAuth(
 
         if (auth.isTokenExpired()) {
             log.info?.("Token expired — attempting refresh...");
-            // const ok = await auth.initFromStorage();
             const ok = await auth.init();
 
             if (!ok) {
