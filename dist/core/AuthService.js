@@ -40,10 +40,16 @@ export class AuthService {
         try {
             this.logger.debug?.("Boot: trying refreshFn to restore session…");
             const newToken = await this.refreshFn?.();
+            const path = location.pathname;
+            const PUBLIC_PAGES = ["/", "/login", "/signup", "/forgot-pwd"];
             if (newToken) {
                 this.setToken(newToken);
                 this.logger.info?.("✅ Session restored via refresh cookie");
                 return true;
+            }
+            if (PUBLIC_PAGES.includes(path)) {
+                this.logger.info?.("No refresh token (public page) → skipping clear()");
+                return false;
             }
             this.logger.warn?.("⚠️ refreshFn returned no token – clearing session");
             this.clear();
