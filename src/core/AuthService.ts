@@ -52,7 +52,7 @@ export class AuthService {
             const newToken = await this.refreshFn?.();
 
             const path = location.pathname;
-            const PUBLIC_PAGES = ["/", "/login", "/signup", "/forgot-pwd", "/arcade"];
+            const PUBLIC_PAGES = ["/", "/login", "/signup", "/forgot-pwd", "/arcade", "/arcade/play"];
 
             if (newToken) {
                 this.setToken(newToken);
