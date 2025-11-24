@@ -41,7 +41,7 @@ export class AuthService {
             this.logger.debug?.("Boot: trying refreshFn to restore session…");
             const newToken = await this.refreshFn?.();
             const path = location.pathname;
-            const PUBLIC_PAGES = ["/", "/login", "/signup", "/forgot-pwd", "/arcade", "/arcade/play"];
+            const PUBLIC_PAGES = ["/", "/login", "/signup", "/forgot-pwd", "/arcade"];
             if (newToken) {
                 this.setToken(newToken);
                 this.logger.info?.("✅ Session restored via refresh cookie");
